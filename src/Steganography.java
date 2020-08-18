@@ -2,12 +2,12 @@
  * Robbie Sollie - Steganography.java - EGR226 - CBU - 9/29/18
  */
 
+import javax.imageio.IIOException;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Scanner;
 
 public class Steganography {
@@ -44,9 +44,17 @@ public class Steganography {
         }
         iSecret = 0;
 
-        System.out.print("Enter the original image file name: ");
-        BufferedImage testImage = ImageIO.read(new File(userInput.nextLine()));
 
+        System.out.print("Enter the original image file name: ");
+        BufferedImage testImage = null;
+        do {
+            try {
+                testImage = ImageIO.read(new File(userInput.nextLine()));
+            } catch (IIOException e) {
+            }
+        } while (testImage == null);
+
+        int count = 0;
         for (int i = 0; i < testImage.getWidth(); i++) {
             for (int j = 0; j < testImage.getHeight(); j++) {
                 Color color = new Color(testImage.getRGB(i, j));
@@ -61,10 +69,15 @@ public class Steganography {
                 blue += message[(iSecret++) % message.length];
                 Color newColor = new Color(red, green, blue);
                 testImage.setRGB(i, j, newColor.getRGB());
+
+                if (iSecret % message.length < 3) {
+                    count++;
+                }
             }
         }
         System.out.print("Enter the file name for the output image: ");
         ImageIO.write(testImage, "png", new File(userInput.nextLine()));
+        System.out.println(count);
     }
 
     private static void decode() throws IOException {
@@ -85,7 +98,20 @@ public class Steganography {
             }
         }
         System.out.println();
+        int startingIndex = 0;
         for (int i = 0; i < decoded.length; i += 8) {
+            int character = 0;
+            for (int j = i + 7; j >= i; j--) {
+                character += decoded[j];
+                character *= 2;
+            }
+            if (character == 0) {
+                startingIndex = i;
+                break;
+            }
+
+        }
+        for (int i = startingIndex + 8; i < decoded.length; i += 8) {
             int character = 0;
             for (int j = i + 7; j >= i; j--) {
                 character += decoded[j];
